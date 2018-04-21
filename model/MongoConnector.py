@@ -38,10 +38,10 @@ class MongoConnector():
         except errors.WriteError as we:
             logging.error("Document failed to send")
 
-    def SendMessage(self, serverId, clientId, message):
+    def SendMessage(self, serverId, nickname, message):
         try:
             logging.debug("Updating server %s" % serverId)
-            data = self.__cursor[self.__CL_SERVER].update_one({"_id": serverId, "clients.id": clientId}, {'$push': {"clients.$.messages": message.__dict__}})
+            data = self.__cursor[self.__CL_SERVER].update_one({"_id": serverId, "clients.nickname": nickname}, {'$push': {"clients.$.messages": message.__dict__}})
             logging.debug("Sending complete")
             return data
         except errors.WriteError as we:
@@ -65,12 +65,13 @@ class MongoConnector():
 
         try:
             logging.debug("Getting nicknames from clients")
-            data = [d["nickname"] for d in data]
+            nicknames = [d["nickname"] for d in data]
             logging.debug("Nicknames retreived")
-            return data
+            return nicknames
         except Exception as identifier:
             logging.error("Nicknames failed to extract")
 
+    # GetClientByNickname! => serverId moet in de parameters toegevoegd worden
     def GetClientByClientId(self, clientId):
         try:
             logging.debug("Getting data from client %s" % clientId)
@@ -99,10 +100,11 @@ from pprint import pprint
 
 # post = [ { "dateCreated": "2018-04-14 15:49:32.597768", "dateClosed": "2018-04-14 15:49:32.597768", "clients": [ { "name": "Lander Moerkerke", "nickname": "lander", "dateLogin": "2018-04-14 15:49:32.597768", "dateLogout": "2018-04-14 15:49:32.597768", "online": True, "email": "lander.moerkerke@student.howest.be", "[messages]": [ { "dateSent": "2018-04-14 15:49:32.597768", "text": "Hoi :)" } ] }, { "name": "Jamie Fong", "nickname": "jamie", "dateLogin": "2018-04-14 15:49:32.597768", "dateLogout": "2018-04-14 15:49:32.597768", "online": False, "email": "jamie.fong@student.howest.be", "messages": [ { "dateSent": "2018-04-14 15:49:32.597768", "text": "Hallo!" } ] } ] }]
 # print(post)
-# test =mc.SendArrayDocuments("server", post)
+# test = mc.SendArrayDocuments("server", post)
 # test = mc.SendMessage(ObjectId("5ad2080b67db1d158cff4b3e"), ObjectId("5ad314fd67db1d42b87a112c"), Message("ko"))
-# test = mc.GetNicknames(ObjectId("5ad2080b67db1d158cff4b3e"))
-test = mc.GetMessagesByClientId(ObjectId("5ad314fd67db1d42b87a112c"))
+test = mc.GetNicknames(ObjectId("5ad2080b67db1d158cff4b3e"))
+# test = mc.GetClients(ObjectId("5ad2080b67db1d158cff4b3e"))
+# test = mc.GetMessagesByClientId(ObjectId("5ad314fd67db1d42b87a112c"))
 pprint(test)
 for i in test:
     print(Message(**i))
