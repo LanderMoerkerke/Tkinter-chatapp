@@ -4,6 +4,7 @@ from pymongo import MongoClient, errors
 from model.Message import Message
 from bson import ObjectId
 
+
 class MongoConnector():
     __CL_SERVER = "server"
 
@@ -16,8 +17,19 @@ class MongoConnector():
             "authSource": db
         }
 
-        self.__connector = MongoClient(**self.__dsn, authMechanism="SCRAM-SHA-1")
+        self.__connector = MongoClient(
+            **self.__dsn, authMechanism="SCRAM-SHA-1")
         self.__cursor = self.__connector[db]
+
+    def CheckUniqueNickname(self, nickname, serverId):
+        nicknames = self.GetNicknames(serverId)
+
+        [nn.lower() for nn in nicknames]
+
+        if nickname.lower() in nicknames:
+            return False
+        else:
+            return True
 
     # Send data
     def SendDocument(self, collection, document):
@@ -41,20 +53,28 @@ class MongoConnector():
     def SendMessage(self, serverId, nickname, message):
         try:
             logging.debug("Updating server %s" % serverId)
-            data = self.__cursor[self.__CL_SERVER].update_one({"_id": serverId, "clients.nickname": nickname}, {'$push': {"clients.$.messages": message.__dict__}})
+            data = self.__cursor[self.__CL_SERVER].update_one(
+                {
+                    "_id": serverId,
+                    "clients.nickname": nickname
+                }, {'$push': {
+                    "clients.$.messages": message.__dict__
+                }})
             logging.debug("Sending complete")
             return data
         except errors.WriteError as we:
             logging.error("Document failed to send")
 
-    def AddClient(self):
+    def AddClient(self, client):
         pass
 
     # Get data
     def GetClients(self, serverId):
         try:
             logging.debug("Getting data from server %s" % serverId)
-            data = self.__cursor[self.__CL_SERVER].find_one({"_id": serverId}, {"clients": 1})
+            data = self.__cursor[self.__CL_SERVER].find_one({
+                "_id": serverId
+            }, {"clients": 1})
             logging.debug("Retreiving complete")
             return data["clients"]
         except errors.WriteError as we:
@@ -75,7 +95,10 @@ class MongoConnector():
     def GetClientByClientId(self, clientId):
         try:
             logging.debug("Getting data from client %s" % clientId)
-            data = self.__cursor[self.__CL_SERVER].find_one({"clients.clientId": clientId}, {"clients.$.messages": 1})
+            data = self.__cursor[self.__CL_SERVER].find_one(
+                {
+                    "clients.clientId": clientId
+                }, {"clients.$.messages": 1})
             logging.debug("Retreiving client complete")
             return data
         except errors.WriteError as we:
@@ -93,7 +116,6 @@ class MongoConnector():
             logging.error("Data failed to retreive")
 
 
-
 mc = MongoConnector("localhost", "chat", "password", "chatapp")
 import datetime
 from pprint import pprint
@@ -102,7 +124,7 @@ from pprint import pprint
 # print(post)
 # test = mc.SendArrayDocuments("server", post)
 # test = mc.SendMessage(ObjectId("5ad2080b67db1d158cff4b3e"), ObjectId("5ad314fd67db1d42b87a112c"), Message("ko"))
-test = mc.GetNicknames(ObjectId("5ad2080b67db1d158cff4b3e"))
+test = mc.CheckUniqueNickname("lander", ObjectId("5ad2080b67db1d158cff4b3e"))
 # test = mc.GetClients(ObjectId("5ad2080b67db1d158cff4b3e"))
 # test = mc.GetMessagesByClientId(ObjectId("5ad314fd67db1d42b87a112c"))
 pprint(test)

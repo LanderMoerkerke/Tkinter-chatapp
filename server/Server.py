@@ -5,7 +5,13 @@ import threading
 from server.Clienthandler import ClientHandler as Ch
 
 # logging.basicConfig(level=logging.INFO)
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s\t%(levelname)s--%(processName)s %(filename)s:%(lineno)s--%(message)s")
+logging.basicConfig(
+    level=logging.DEBUG,
+    format=
+    "%(asctime)s\t%(levelname)s--%(processName)s %(filename)s:%(lineno)s--%(message)s"
+)
+print("hoi")
+
 
 class Server(threading.Thread):
     def __init__(self, pHost, pPort, pMessageQueue=None):
@@ -51,7 +57,8 @@ class Server(threading.Thread):
                 cls = Ch(clientsocket, self.messageQueue)
                 cls.start()
 
-                logging.info("Amount of threads active: %s" % threading.active_count())
+                logging.info(
+                    "Amount of threads active: %s" % threading.active_count())
 
         except Exception as ex:
             logging.error(ex)
@@ -62,6 +69,15 @@ class Server(threading.Thread):
     def print_message_gui(self, message):
         self.messageQueue.put("<Server> %s" % message)
 
-rs = Server(socket.gethostname(), 7000, )
-rs.startServer()
-rs.run()
+
+def main():
+    rs = Server(
+        socket.gethostname(),
+        7000,
+    )
+    rs.startServer()
+    rs.run()
+
+
+if __name__ == '__main__':
+    main()

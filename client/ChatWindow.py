@@ -9,9 +9,14 @@ from tkinter.ttk import Combobox
 from Week_5.model.Classes import BrakingDistance, RoadCondition
 
 # logging.basicConfig(level=logging.INFO)
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s\t%(levelname)s--%(processName)s %(filename)s:%(lineno)s--%(message)s")
+logging.basicConfig(
+    level=logging.DEBUG,
+    format=
+    "%(asctime)s\t%(levelname)s--%(processName)s %(filename)s:%(lineno)s--%(message)s"
+)
 
-class ChattWindow(Frame):
+
+class ChatWindow(Frame):
     def __init__(self, port, master=None):
         super().__init__(master)
 
@@ -48,8 +53,13 @@ class ChattWindow(Frame):
 
         self.buttonCalculate = Button(
             self, text="Calculate brake distance", command=self.Calculate)
-        self.buttonCalculate.grid(row=3, column=0, columnspan=3, pady=(
-            5, 5), padx=(5, 5), sticky=N + S + E + W)
+        self.buttonCalculate.grid(
+            row=3,
+            column=0,
+            columnspan=3,
+            pady=(5, 5),
+            padx=(5, 5),
+            sticky=N + S + E + W)
 
         Grid.rowconfigure(self, 3, weight=1)
         Grid.columnconfigure(self, 1, weight=1)
@@ -91,8 +101,8 @@ class ChattWindow(Frame):
             # waiting for answer
             result = float(self.my_writer_obj.readline().rstrip('\n'))
 
-            messagebox.showinfo(
-                "Stopafstand", "De stopafstand bedraagt: %.2f" % result)
+            messagebox.showinfo("Stopafstand",
+                                "De stopafstand bedraagt: %.2f" % result)
             # self.label_resultaat['text'] = "{0}".format(result)
 
         except Exception as ex:
