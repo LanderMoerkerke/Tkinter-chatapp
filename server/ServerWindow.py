@@ -1,12 +1,14 @@
 import socket
 import logging
 from threading import Thread
+from queue import Queue
 
 from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import Combobox
 
 from server.Server import Server
+from model.MongoConnector import MongoConnector
 
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(
@@ -17,16 +19,51 @@ logging.basicConfig(
 
 
 class ServerWindow(Frame):
-    def __init__(self, port=7000, master=None, message_queue=None):
+    def __init__(self, port=7000, master=None):
         Frame.__init__(self, master)
         # Thread.__init__(self)
         self.master = master
         self.initWindow()
 
-        self.server = Server(socket.gethostname(), port, message_queue)
+        self.__mc = MongoConnector("localhost", "chat", "password", "chatapp")
+        self.serverId = self.__mc.CreateServer().inserted_id
+
+        self.initMessageQueue()
+        self.initDatabaseQueue()
+
+        self.server = Server(socket.gethostname(), port, self.__messageQueue,
+                             self.__databaseQueue)
+
         self.toggleServer()
         self.__port = port
-        self.__message_queue = message_queue
+
+    def initMessageQueue(self):
+        self.__messageQueue = Queue(10)
+        t = Thread(target=self.print_messsages_from_messageQueue)
+        t.start()
+
+    def initDatabaseQueue(self):
+        self.__databaseQueue = Queue(10)
+        t = Thread(target=self.processDatabaseQueue)
+        t.start()
+        logging.info("Databasequeue started")
+
+    def print_messsages_from_messageQueue(self):
+        message = self.__messageQueue.get()
+        while message != "CLOSE_SERVER":
+            self.lstnumbers.insert(END, message)
+            self.__messageQueue.task_done()
+            message = self.__messageQueue.get()
+        print("queue stop")
+
+    def processDatabaseQueue(self):
+        print("processsing")
+        client = self.__databaseQueue.get()
+        while self.server.statusServer:
+            self.__mc.AddClient(client, self.serverId)
+            self.__databaseQueue.task_done()
+            client = self.__databaseQueue.get()
+        print("queue stop")
 
     def initWindow(self):
         logging.info("Creating server window...")
@@ -87,15 +124,3 @@ class ServerWindow(Frame):
 
     def statusServer(self):
         return self.server.statusServer()
-
-
-def main():
-    print("test")
-    root = Tk()
-    root.geometry("800x600")
-    app = ServerWindow(7000, root)
-    root.mainloop()
-
-
-if __name__ == '__main__':
-    main()

@@ -1,12 +1,10 @@
-"""Herwerken Oef5 van Week_4: GUI Clientside."""
 import socket
 import logging
-import ujson
-from enum import Enum
+import json
+
 from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import Combobox
-from Week_5.model.Classes import BrakingDistance, RoadCondition
 
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(
@@ -17,52 +15,70 @@ logging.basicConfig(
 
 
 class ChatWindow(Frame):
-    def __init__(self, port, master=None):
+    def __init__(self, port, clientsocket, master=None):
         super().__init__(master)
 
         self.master = master
         self.__port = port
 
         self.init_chat()
-        self.makeConnnectionWithServer()
+        self.clientsocket = clientsocket
+        # self.my_writer_obj = self.clientsocket.makefile(mode='rw')
 
     def init_chat(self):
         logging.info("Creating client window...")
         # changing the title of our master widget
-        self.master.title("Chatapp")
+        self.master.title("Chat Window")
 
         # allowing the widget to take the full space of the root window
         self.pack(fill=BOTH, expand=1)
 
-        Label(self, text="Speed (km/u):").grid(row=0)
-        Label(self, text="Reaction time (sec):", pady=10).grid(row=1)
-        Label(self, text="Type road:", pady=10).grid(row=2)
+        # Declaration
+        # Left side
+        Label(self, text="Online:", padx=5).grid(row=0, column=0, sticky=W)
+        self.scrollbarnn = Scrollbar(self, orient=VERTICAL)
+        self.lstClients = Listbox(self, yscrollcommand=self.scrollbarnn.set)
 
-        self.entSpeed = Entry(self, width=40)
-        self.entReaction = Entry(self, width=40)
-        self.cboRoad = Combobox(self, width=40)
+        # Right side
+        Label(self, text="Chat:", pady=5).grid(row=0, column=2, sticky=W)
+        self.scrollbarchat = Scrollbar(self, orient=VERTICAL)
+        self.lstChat = Listbox(self, yscrollcommand=self.scrollbarchat.set)
 
-        self.entSpeed.grid(row=0, column=1, sticky=E + W, pady=(5, 5))
-        self.entReaction.grid(row=1, column=1, sticky=E + W)
-        self.cboRoad.grid(row=2, column=1, sticky=E + W)
+        # Bottom
+        self.entChat = Entry(self, width=40)
 
-        self.cboRoad["values"] = ["Wet surface", "Dry surface"]
-
-        Label(self, text="km/u").grid(row=0, column=2)
-        Label(self, text="sec", pady=10).grid(row=1, column=2)
-
-        self.buttonCalculate = Button(
-            self, text="Calculate brake distance", command=self.Calculate)
-        self.buttonCalculate.grid(
-            row=3,
+        # Grid SETUP
+        # Left side
+        self.lstClients.grid(
+            row=1,
             column=0,
-            columnspan=3,
+            rowspan=2,
+            pady=(0, 7),
+            padx=(5, 0),
+            sticky=N + S + W)
+        self.scrollbarnn.grid(
+            row=1, column=1, rowspan=2, pady=(0, 7), sticky=N + S + W)
+
+        # Right side
+        self.lstChat.grid(row=1, column=2, columnspan=2, sticky=N + S + E + W)
+        self.scrollbarchat.grid(
+            row=1, column=4, padx=(0, 0), sticky=N + W + E + S)
+
+        # Bottom
+        self.entChat.grid(row=2, column=2, sticky=E + W)
+
+        self.btnSendMessage = Button(
+            self, text="Send", command=self.sendMessage)
+        self.btnSendMessage.grid(
+            row=2,
+            column=3,
+            columnspan=2,
             pady=(5, 5),
             padx=(5, 5),
             sticky=N + S + E + W)
 
         Grid.rowconfigure(self, 3, weight=1)
-        Grid.columnconfigure(self, 1, weight=1)
+        Grid.columnconfigure(self, 5, weight=1)
         logging.info("Clientwindow created")
 
     def makeConnnectionWithServer(self):
@@ -84,7 +100,7 @@ class ChatWindow(Frame):
     def __del__(self):
         self.close_connection()
 
-    def Calculate(self):
+    def sendMessage(self):
         try:
             speed = float(self.entSpeed.get())
             reaction_time = float(self.entReaction.get())
@@ -120,3 +136,9 @@ class ChatWindow(Frame):
             self.s.close()
         except Exception as ex:
             logging.error("Foutmelding: Close connection with server failed")
+
+
+root = Tk()
+# root.geometry("800x600")
+app = ChatWindow(7000, None, root)
+root.mainloop()

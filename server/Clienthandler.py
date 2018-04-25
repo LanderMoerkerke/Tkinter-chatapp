@@ -1,17 +1,22 @@
 import threading
 import logging
-import ujson
+import json
+from bson import json_util
 
 
 class ClientHandler(threading.Thread):
     amountClients = 0
 
-    def __init__(self, pSocketClient, pMessageQueue=None):
+    def __init__(self, pSocketClient, pMessageQueue, pDatabaseQueue):
         threading.Thread.__init__(self)
 
         self.socketClient = pSocketClient
-        self.messes_queue = pMessageQueue
+        self.messesQueue = pMessageQueue
+        self.databaseQueue = pDatabaseQueue
         self.id = ClientHandler.amountClients
+
+        self.initialized = False
+
         ClientHandler.amountClients += 1
 
     def run(self):
@@ -20,10 +25,25 @@ class ClientHandler(threading.Thread):
         io = self.socketClient.makefile(mode='rw')
 
         msg = io.readline().rstrip('\n')
+
+        while not self.initialized:
+            logging.info("Message received: %s" % msg)
+            try:
+                client = json.loads(msg, object_hook=json_util.object_hook)
+                self.databaseQueue.put(client)
+                self.initialized = True
+            except ValueError as ve:
+                logging.error("Cannot convert message")
+            except Exception as ex:
+                logging.error(ex)
+            finally:
+                msg = io.readline().rstrip('\n')
+
         while msg.lower() != "close":
             logging.info("Message received: %s" % msg)
 
             try:
+
                 # Wanneer je een bericht binennkrijgt
                 # dc = json.loads(msg)
                 # if "speed" in dc.keys():

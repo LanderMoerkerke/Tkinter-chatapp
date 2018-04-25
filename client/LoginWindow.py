@@ -1,9 +1,12 @@
 import logging
 import socket
+import json
+from bson import json_util
 
 from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import Combobox
+from tkinter import Toplevel
 
 from model.Client import Client
 
@@ -24,8 +27,10 @@ class LoginWindow(Frame):
 
         self.init_window()
         self.makeConnnectionWithServer()
+        # self.create_chatwindow()
 
     def init_window(self):
+        self.master.title("Login")
         self.label_name = Label(self, text="Name")
         self.label_nickname = Label(self, text="Nickname")
         self.label_email = Label(self, text="Email")
@@ -54,8 +59,23 @@ class LoginWindow(Frame):
         email = self.entry_email.get()
 
         self.client = Client(name, nickname, email)
+        print("dit is de client")
+        print(self.client)
 
         # Check if nickname is in use
+        self.my_writer_obj.write(
+            json.dumps(self.client.__dict__, default=json_util.default) + "\n")
+        self.my_writer_obj.flush()
+
+        self.create_chatwindow()
+
+    def create_chatwindow(self):
+        t = Toplevel(self)
+        from client.ChatWindow import ChatWindow
+        self.child = ChatWindow(self.__port, self.s, t)
+        # t.wm_title("Chatwindow)
+        # l = tk.Label(t, text="This is window #%s" % self.counter)
+        # l.pack(side="top", fill="both", expand=True, padx=100, pady=100)
 
     def makeConnnectionWithServer(self):
         try:

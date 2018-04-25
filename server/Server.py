@@ -2,6 +2,7 @@ import logging
 import socket
 import json
 import threading
+from queue import Queue
 from server.Clienthandler import ClientHandler as Ch
 
 # logging.basicConfig(level=logging.INFO)
@@ -10,16 +11,16 @@ logging.basicConfig(
     format=
     "%(asctime)s\t%(levelname)s--%(processName)s %(filename)s:%(lineno)s--%(message)s"
 )
-print("hoi")
 
 
 class Server(threading.Thread):
-    def __init__(self, pHost, pPort, pMessageQueue=None):
+    def __init__(self, pHost, pPort, messageQueue, databaseQueue):
         threading.Thread.__init__(self)
 
         self.host = pHost
         self.port = pPort
-        self.messageQueue = pMessageQueue
+        self.__messageQueue = messageQueue
+        self.__databaseQueue = databaseQueue
         self.__serverStatus = False
 
     @property
@@ -54,7 +55,8 @@ class Server(threading.Thread):
                 clientsocket, addr = self.serversocket.accept()
                 logging.info("Got a connection from %s" % str(addr))
 
-                cls = Ch(clientsocket, self.messageQueue)
+                cls = Ch(clientsocket, self.__messageQueue,
+                         self.__databaseQueue)
                 cls.start()
 
                 logging.info(
@@ -67,7 +69,7 @@ class Server(threading.Thread):
             logging.info("Server closed")
 
     def print_message_gui(self, message):
-        self.messageQueue.put("<Server> %s" % message)
+        self.__messageQueue.put("<Server> %s" % message)
 
 
 def main():
