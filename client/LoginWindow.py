@@ -67,6 +67,16 @@ class LoginWindow(Frame):
             json.dumps(self.client.__dict__, default=json_util.default) + "\n")
         self.my_writer_obj.flush()
 
+        msg = self.my_writer_obj.readline.rstrip('\n')
+        logging.info("Response nickname received: %s" % msg)
+
+        while msg.lower() != "success":
+            logging.info("Nickname in use")
+            messagebox.showinfo(
+                "Nickname",
+                "Nickname is already in use. Choose a different nickname.")
+            msg = self.my_writer_obj.readline.rstrip('\n')
+
         self.create_chatwindow()
 
     def create_chatwindow(self):
@@ -105,7 +115,12 @@ class LoginWindow(Frame):
             logging.error("Foutmelding: Close connection with server failed")
 
 
-root = Tk()
-# root.geometry("800x800")
-app = LoginWindow(7000, root)
-root.mainloop()
+def main():
+    root = Tk()
+    # root.geometry("800x800")
+    app = LoginWindow(7000, root)
+    root.mainloop()
+
+
+if __name__ == '__main__':
+    main()

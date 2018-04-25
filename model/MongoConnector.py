@@ -68,7 +68,7 @@ class MongoConnector():
                     "_id": serverId,
                     "clients.nickname": nickname
                 }, {'$push': {
-                    "clients.$.messages": message.__dict__
+                    "clients.$.messages": message
                 }})
             logging.debug("Sending complete")
             return data

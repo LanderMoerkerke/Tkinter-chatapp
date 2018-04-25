@@ -1,10 +1,16 @@
 import socket
 import logging
 import json
+from threading import Thread
 
 from tkinter import *
 from tkinter import messagebox
 from tkinter.ttk import Combobox
+
+from bson import json_util
+
+from model.Client import Client
+from model.Message import Message
 
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(
@@ -22,7 +28,15 @@ class ChatWindow(Frame):
         self.__port = port
 
         self.init_chat()
-        self.clientsocket = clientsocket
+
+        # testen
+        self.makeConnnectionWithServer()
+        self.client = Client("Lander", "JF", "blabla")
+        self.my_writer_obj.write(
+            json.dumps(self.client.__dict__, default=json_util.default) + "\n")
+        self.my_writer_obj.flush()
+
+        # self.clientsocket = clientsocket
         # self.my_writer_obj = self.clientsocket.makefile(mode='rw')
 
     def init_chat(self):
@@ -84,13 +98,20 @@ class ChatWindow(Frame):
     def makeConnnectionWithServer(self):
         try:
             logging.info("Making connection with server...")
+
             # get local machine name
             host = socket.gethostname()
             self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
             # connection to hostname on the port.
             self.s.connect((host, self.__port))
             self.my_writer_obj = self.s.makefile(mode='rw')
+
             logging.info("Open connection with server succesfully")
+
+            t = Thread(target=self.readStreamWriter)
+            t.start()
+            logging.info("Thread stream reader starter")
         except Exception as ex:
             logging.error("Foutmelding: %s" % str(ex))
             messagebox.showinfo("Stopafstand - foutmelding",
@@ -102,31 +123,33 @@ class ChatWindow(Frame):
 
     def sendMessage(self):
         try:
-            speed = float(self.entSpeed.get())
-            reaction_time = float(self.entReaction.get())
-            surface = self.cboRoad.current()
+            message = Message(self.entChat.get())
 
-            logging.info("Got value speed: %s" % speed)
-            logging.info("Got value reaction time: %s" % reaction_time)
-            logging.info("Got index of surface: %s" % surface)
-
-            obj = BrakingDistance(speed, reaction_time, surface)
-            self.my_writer_obj.write("%s\n" % ujson.dumps(obj))
+            self.my_writer_obj.write(
+                json.dumps(message.__dict__, default=json_util.default) + "\n")
             self.my_writer_obj.flush()
 
-            # waiting for answer
-            result = float(self.my_writer_obj.readline().rstrip('\n'))
+            logging.info('Message sent "%s"' % message.text)
 
-            messagebox.showinfo("Stopafstand",
-                                "De stopafstand bedraagt: %.2f" % result)
-            # self.label_resultaat['text'] = "{0}".format(result)
-
+            self.lstChat.insert(END, "%s: %s" % (self.client.nickname,
+                                                 message.text))
         except Exception as ex:
             logging.error("Foutmelding: %s" % ex)
-            messagebox.showinfo("Error", "Something has gone wrong...")
+            messagebox.showinfo("Error", "Failed sending message")
             logging.error(ex)
             raise ex
-            self.__del__()
+            # self.__del__()
+
+    def readStreamWriter(self):
+        try:
+            while True:
+                # berichten ontvangen van andere mensen en printen in lstChats
+                msg = self.my_writer_obj.readline().rstrip('\n')
+                logging.info("Read stream writer found a message: %s" % msg)
+                #  self.lstChat.insert(END, "%s: %s" % (self.client.name,
+                #                                  message.text))
+        except expression as identifier:
+            pass
 
     def close_connection(self):
         try:
@@ -138,7 +161,12 @@ class ChatWindow(Frame):
             logging.error("Foutmelding: Close connection with server failed")
 
 
-root = Tk()
-# root.geometry("800x600")
-app = ChatWindow(7000, None, root)
-root.mainloop()
+def main():
+    root = Tk()
+    # root.geometry("800x600")
+    app = ChatWindow(7000, None, root)
+    root.mainloop()
+
+
+if __name__ == '__main__':
+    main()

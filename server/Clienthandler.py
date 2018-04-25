@@ -11,7 +11,7 @@ class ClientHandler(threading.Thread):
         threading.Thread.__init__(self)
 
         self.socketClient = pSocketClient
-        self.messesQueue = pMessageQueue
+        self.messageQueue = pMessageQueue
         self.databaseQueue = pDatabaseQueue
         self.id = ClientHandler.amountClients
 
@@ -27,10 +27,11 @@ class ClientHandler(threading.Thread):
         msg = io.readline().rstrip('\n')
 
         while not self.initialized:
-            logging.info("Message received: %s" % msg)
+            logging.info("Client received: %s" % msg)
             try:
-                client = json.loads(msg, object_hook=json_util.object_hook)
-                self.databaseQueue.put(client)
+                self.client = json.loads(
+                    msg, object_hook=json_util.object_hook)
+                self.databaseQueue.put(self.client)
                 self.initialized = True
             except ValueError as ve:
                 logging.error("Cannot convert message")
@@ -43,17 +44,16 @@ class ClientHandler(threading.Thread):
             logging.info("Message received: %s" % msg)
 
             try:
-
-                # Wanneer je een bericht binennkrijgt
-                # dc = json.loads(msg)
-                # if "speed" in dc.keys():
-                #     result = BrakingDistance.CalculateDistanceFromDict(dc)
-                #     logging.info("Calculated result: %.2f meter." % result)
-                #     io.write("%s\n" % result)
-                #     io.flush()
-                pass
+                message = json.loads(msg, object_hook=json_util.object_hook)
+                sender_object = [message, self.client["nickname"]]
+                logging.info("Message parsed: %s" % sender_object)
+                self.messageQueue.put(sender_object)
+            except Exception as ex:
+                logging.error(ex)
             except ValueError as ve:
                 logging.error("Cannot parse message to json. %s" % ve)
+            finally:
+                msg = io.readline().rstrip('\n')
 
             msg = io.readline().rstrip('\n')
         self.socketClient.close()
