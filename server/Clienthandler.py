@@ -22,39 +22,47 @@ class ClientHandler(threading.Thread):
     def run(self):
         logging.info("Threat run server started")
         logging.info("Amount of threads active: %s" % threading.active_count())
-        io = self.socketClient.makefile(mode='rw')
+        self.io = self.socketClient.makefile(mode='rw')
 
-        msg = io.readline().rstrip('\n')
+        try:
+            while not self.initialized:
+                msg = self.io.readline().rstrip('\n')
+                logging.info("Client received: %s" % msg)
 
-        while not self.initialized:
-            logging.info("Client received: %s" % msg)
-            try:
-                self.client = json.loads(
-                    msg, object_hook=json_util.object_hook)
-                self.databaseQueue.put(self.client)
-                self.initialized = True
-            except ValueError as ve:
-                logging.error("Cannot convert message")
-            except Exception as ex:
-                logging.error(ex)
-            finally:
-                msg = io.readline().rstrip('\n')
+                try:
+                    self.client = json.loads(
+                        msg, object_hook=json_util.object_hook)
+                    self.databaseQueue.put(self.client)
+                    self.initialized = True
+                except ValueError as ve:
+                    logging.error("Cannot convert message")
+                except Exception as ex:
+                    logging.error("Hierzo")
+                    logging.error(ex)
 
-        while msg.lower() != "close":
+            msg = self.io.readline().rstrip('\n')
             logging.info("Message received: %s" % msg)
 
-            try:
-                message = json.loads(msg, object_hook=json_util.object_hook)
-                sender_object = [message, self.client["nickname"]]
-                logging.info("Message parsed: %s" % sender_object)
-                self.messageQueue.put(sender_object)
-            except Exception as ex:
-                logging.error(ex)
-            except ValueError as ve:
-                logging.error("Cannot parse message to json. %s" % ve)
-            finally:
-                msg = io.readline().rstrip('\n')
+            while msg.lower() != "close":
+                try:
+                    message = json.loads(
+                        msg, object_hook=json_util.object_hook)
+                    sender_object = [message, self.client["nickname"]]
+                    logging.info("Message parsed: %s" % sender_object)
+                    self.messageQueue.put(sender_object)
 
-            msg = io.readline().rstrip('\n')
-        self.socketClient.close()
-        logging.info("Connection closed")
+                    msg = self.io.readline().rstrip('\n')
+                    logging.info("Message received: %s" % msg)
+                except Exception as ex:
+                    logging.error(ex)
+                except ValueError as ve:
+                    logging.error("Cannot parse message to json. %s" % ve)
+
+                msg = self.io.readline().rstrip('\n')
+        except Exception as ex:
+            self.socketClient.close()
+            logging.info("Connection closed")
+
+    def SendMessageToChatwindow(self, objString):
+        self.io.write("%s\n" % objString)
+        self.io.flush()

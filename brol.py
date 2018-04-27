@@ -23,4 +23,9 @@ import json
 # print(json.loads(jsonstring, object_hook=json_util.object_hook))
 # print(Client())
 
-print(datetime.datetime.now())
+# print(datetime.datetime.now())
+
+obj = [{"test": "jefke"}, "nickname"]
+jsonstring = json.dumps(obj)
+print(jsonstring)
+print(json.loads(jsonstring))

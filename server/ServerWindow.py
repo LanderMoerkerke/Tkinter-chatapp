@@ -1,5 +1,7 @@
 import socket
 import logging
+import json
+from bson import json_util
 from threading import Thread
 from queue import Queue
 
@@ -49,14 +51,39 @@ class ServerWindow(Frame):
         logging.info("Databasequeue started")
 
     def print_messsages_from_messageQueue(self):
-        message = self.__messageQueue.get()
-        while message[0]["text"] != "CLOSE_SERVER":
-            self.lstlog.insert(END, "%s: %s" % (message[1],
-                                                message[0]["text"]))
-            self.__mc.SendMessage(self.serverId, message[1], message[0])
+        # obj: [dict(message), nickname]
+        obj = self.__messageQueue.get()
+        logging.info("Retreived item from messagequeue: %s" % obj)
+
+        message = obj[0]
+        nickname = obj[1]
+
+        while message["text"] != "CLOSE_SERVER":
+            # Message wordt op het logvenster geprint
+            self.lstlog.insert(END, "%s: %s" % (nickname, message["text"]))
+
+            # Message wordt naar de db gestuurd
+            self.__mc.SendMessage(self.serverId, nickname, message)
+
+            # Message wordt doorgestuurd naar iedere clienthandler
+            self.SendMessageToHandlers(
+                json.dumps(obj, default=json_util.default))
+
+            # Task done
             self.__messageQueue.task_done()
-            message = self.__messageQueue.get()
+
+            # Getting next item from queue
+            obj = self.__messageQueue.get()
+            logging.info("Retreived item from messagequeue: %s" % obj)
+
+            message = obj[0]
+            nickname = obj[1]
+
         print("queue stop")
+
+    def SendMessageToHandlers(self, objJson):
+        for clh in self.server.clientHandlers:
+            clh.SendMessageToChatwindow(objJson)
 
     def processDatabaseQueue(self):
         print("processsing")

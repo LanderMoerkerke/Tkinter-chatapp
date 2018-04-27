@@ -23,6 +23,8 @@ class Server(threading.Thread):
         self.__databaseQueue = databaseQueue
         self.__serverStatus = False
 
+        self.clientHandlers = []
+
     @property
     def statusServer(self):
         return self.__serverStatus
@@ -57,12 +59,14 @@ class Server(threading.Thread):
 
                 cls = Ch(clientsocket, self.__messageQueue,
                          self.__databaseQueue)
+                self.clientHandlers.append(cls)
                 cls.start()
 
                 logging.info(
                     "Amount of threads active: %s" % threading.active_count())
 
         except Exception as ex:
+            logging.error("Server crashed")
             logging.error(ex)
             self.serversocket.close()
             self.__serverStatus = False

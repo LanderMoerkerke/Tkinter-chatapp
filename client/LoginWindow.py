@@ -62,7 +62,7 @@ class LoginWindow(Frame):
         print("dit is de client")
         print(self.client)
 
-        # Check if nickname is in use
+        # Checks if nickname is in use
         self.my_writer_obj.write(
             json.dumps(self.client.__dict__, default=json_util.default) + "\n")
         self.my_writer_obj.flush()

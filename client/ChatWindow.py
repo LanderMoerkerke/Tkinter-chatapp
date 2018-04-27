@@ -25,16 +25,16 @@ class ChatWindow(Frame):
         super().__init__(master)
 
         self.master = master
-        self.__port = port
+        self.__port = 7000
 
         self.init_chat()
 
         # testen
-        self.makeConnnectionWithServer()
-        self.client = Client("Lander", "JF", "blabla")
-        self.my_writer_obj.write(
-            json.dumps(self.client.__dict__, default=json_util.default) + "\n")
-        self.my_writer_obj.flush()
+        # self.makeConnnectionWithServer()
+        # self.client = Client("Lander", "JF", "blabla")
+        # self.my_writer_obj.write(
+        #     json.dumps(self.client.__dict__, default=json_util.default) + "\n")
+        # self.my_writer_obj.flush()
 
         # self.clientsocket = clientsocket
         # self.my_writer_obj = self.clientsocket.makefile(mode='rw')
@@ -114,8 +114,7 @@ class ChatWindow(Frame):
             logging.info("Thread stream reader starter")
         except Exception as ex:
             logging.error("Foutmelding: %s" % str(ex))
-            messagebox.showinfo("Stopafstand - foutmelding",
-                                "Something has gone wrong...")
+            messagebox.showinfo("Chatwindow", "Something has gone wrong...")
             self.__del__()
 
     def __del__(self):
@@ -123,6 +122,7 @@ class ChatWindow(Frame):
 
     def sendMessage(self):
         try:
+            logging.info("Button send pressed")
             message = Message(self.entChat.get())
 
             self.my_writer_obj.write(
@@ -131,8 +131,9 @@ class ChatWindow(Frame):
 
             logging.info('Message sent "%s"' % message.text)
 
-            self.lstChat.insert(END, "%s: %s" % (self.client.nickname,
-                                                 message.text))
+            # self.lstChat.insert(END, "%s: %s" % (self.client.nickname,
+            #                                      message.text))
+
         except Exception as ex:
             logging.error("Foutmelding: %s" % ex)
             messagebox.showinfo("Error", "Failed sending message")
@@ -143,13 +144,24 @@ class ChatWindow(Frame):
     def readStreamWriter(self):
         try:
             while True:
+                # Verder uitwerken voor andere commando's
                 # berichten ontvangen van andere mensen en printen in lstChats
                 msg = self.my_writer_obj.readline().rstrip('\n')
                 logging.info("Read stream writer found a message: %s" % msg)
+
+                obj = json.loads(msg, object_hook=json_util.object_hook)
+
+                # kunnen onderscheid maken tussen message object en lijst online clients
+                if True:
+                    message = obj[0]
+                    nickname = obj[1]
+                    self.lstChat.insert(END, "%s: %s" % (nickname,
+                                                         message["text"]))
+
                 #  self.lstChat.insert(END, "%s: %s" % (self.client.name,
                 #                                  message.text))
-        except expression as identifier:
-            pass
+        except Exception as ex:
+            logging.error(ex)
 
     def close_connection(self):
         try:
