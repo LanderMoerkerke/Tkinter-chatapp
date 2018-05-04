@@ -130,9 +130,9 @@ class ChatWindow(Frame):
                 logging.info("Read stream writer found a message: %s" % msg)
 
                 command = msg[:3]
-                print(msg[3:])
+
                 obj = json.loads(msg[3:], object_hook=json_util.object_hook)
-                print(obj)
+
                 # kunnen onderscheid maken tussen message object en lijst online clients
                 if command == "MSG":
                     logging.info("Command MSG triggered")
@@ -146,12 +146,15 @@ class ChatWindow(Frame):
         except Exception as ex:
             logging.error(ex)
 
-    def printOnlineNicknames(self, lstNicknames):
+    def printOnlineNicknames(self, lstClients):
+        lstOnline = [
+            client["nickname"] for client in lstClients if client["online"]
+        ]
+
         self.lstClients.delete(0, END)
 
-        for nn in lstNicknames:
-            print(nn)
-            self.lstClients.insert(END, nn["nickname"])
+        for nn in lstOnline:
+            self.lstClients.insert(END, nn)
 
     def close_connection(self):
         try:

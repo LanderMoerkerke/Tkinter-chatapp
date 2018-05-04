@@ -7,13 +7,15 @@ from bson import json_util
 class ClientHandler(threading.Thread):
     amountClients = 0
 
-    def __init__(self, pSocketClient, pMessageQueue, pDatabaseQueue):
+    def __init__(self, pSocketClient, pMessageQueue, pDatabaseQueue,
+                 pCurrentclients):
         threading.Thread.__init__(self)
 
         self.socketClient = pSocketClient
         self.messageQueue = pMessageQueue
         self.databaseQueue = pDatabaseQueue
         self.id = ClientHandler.amountClients
+        self.currentClients = pCurrentclients
 
         self.initialized = False
 
@@ -33,10 +35,13 @@ class ClientHandler(threading.Thread):
                     self.client = json.loads(
                         msg, object_hook=json_util.object_hook)
 
-                    # zal error geven wanneer client al in use is
-                    self.databaseQueue.put(self.client)
-
-                    self.initialized = True
+                    # Checks if nickname is in use
+                    if self.client["nickname"].lower() in self.currentClients:
+                        self.io.write("%s\n" % "cltfailed")
+                        self.io.flush()
+                    else:
+                        self.databaseQueue.put(self.client)
+                        self.initialized = True
                 except Exception as ex:
                     self.io.write("%s\n" % "clientnotadded")
                     self.io.flush()

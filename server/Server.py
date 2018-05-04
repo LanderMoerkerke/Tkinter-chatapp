@@ -22,6 +22,7 @@ class Server(threading.Thread):
         self.__messageQueue = messageQueue
         self.__databaseQueue = databaseQueue
         self.__serverStatus = False
+        self.currentClients = []
 
         self.clientHandlers = []
 
@@ -58,12 +59,9 @@ class Server(threading.Thread):
                 logging.info("Got a connection from %s" % str(addr))
 
                 cls = Ch(clientsocket, self.__messageQueue,
-                         self.__databaseQueue)
+                         self.__databaseQueue, self.currentClients)
                 self.clientHandlers.append(cls)
                 cls.start()
-
-                # send clients to clienthandlers
-                
 
                 logging.info(
                     "Amount of threads active: %s" % threading.active_count())

@@ -25,7 +25,32 @@ import json
 
 # print(datetime.datetime.now())
 
-obj = [{"test": "jefke"}, "nickname"]
-jsonstring = json.dumps(obj)
-print(jsonstring)
-print(json.loads(jsonstring))
+# obj = [{"test": "jefke"}, "nickname"]
+# jsonstring = json.dumps(obj)
+# print(jsonstring)
+# print(json.loads(jsonstring))
+
+# test = json.loads('{"status": "error"}')
+# # test = "ok"
+# if isinstance(test, dict) and "status" in test.keys():
+#     print("ok")
+
+clients = [{
+    'name': 'jan',
+    'nickname': 'jan',
+    'email': 'jan',
+    'dateLogin': datetime.datetime(2018, 5, 4, 20, 34, 55, 833000),
+    'dateLogout': None,
+    'online': True,
+    'messages': []
+}, {
+    'name': 'karel',
+    'nickname': 'karel',
+    'email': 'karel',
+    'dateLogin': datetime.datetime(2018, 5, 4, 20, 35, 7, 502000),
+    'dateLogout': None,
+    'online': True,
+    'messages': []
+}]
+lstOnline = [client for client in clients if client["online"]]
+print(lstOnline)

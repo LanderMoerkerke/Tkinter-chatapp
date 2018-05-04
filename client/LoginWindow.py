@@ -53,6 +53,24 @@ class LoginWindow(Frame):
 
         self.pack()
 
+    def makeConnnectionWithServer(self):
+        try:
+            logging.info("Making connection with server...")
+
+            # get local machine name
+            host = socket.gethostname()
+            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+            # connection to hostname on the port.
+            self.s.connect((host, self.__port))
+            self.my_writer_obj = self.s.makefile(mode='rw')
+
+            logging.info("Open connection with server succesfully")
+        except Exception as ex:
+            logging.error("Foutmelding: %s" % str(ex))
+            messagebox.showinfo("Something has gone wrong...")
+            # self.__del__()
+
     def GetFields(self):
         logging.info("Getting input fields")
 
@@ -76,9 +94,9 @@ class LoginWindow(Frame):
         msg = self.my_writer_obj.readline().rstrip('\n')
         logging.info("Response nickname received: %s" % msg)
 
-        if msg.lower() == "clientadded":
+        if msg == "clientadded":
             self.create_chatwindow()
-        else:
+        elif msg == "cltfailed":
             logging.info("Nickname in use")
             messagebox.showinfo(
                 "Nickname",
@@ -92,24 +110,6 @@ class LoginWindow(Frame):
         # t.wm_title("Chatwindow)
         # l = tk.Label(t, text="This is window #%s" % self.counter)
         # l.pack(side="top", fill="both", expand=True, padx=100, pady=100)
-
-    def makeConnnectionWithServer(self):
-        try:
-            logging.info("Making connection with server...")
-
-            # get local machine name
-            host = socket.gethostname()
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            # connection to hostname on the port.
-            self.s.connect((host, self.__port))
-            self.my_writer_obj = self.s.makefile(mode='rw')
-
-            logging.info("Open connection with server succesfully")
-        except Exception as ex:
-            logging.error("Foutmelding: %s" % str(ex))
-            messagebox.showinfo("Something has gone wrong...")
-            # self.__del__()
 
     def close_connection(self):
         try:

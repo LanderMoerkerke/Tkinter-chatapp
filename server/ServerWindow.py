@@ -88,7 +88,6 @@ class ServerWindow(Frame):
             clh.SendMessageToChatwindow(command, objJson)
 
     def processDatabaseQueue(self):
-        print("processsing")
         item = self.__databaseQueue.get()
         while self.server.statusServer:
             logging.info("Got a queue-item, databasequeue: %s" % item)
@@ -96,6 +95,13 @@ class ServerWindow(Frame):
                 self.__mc.AddClient(item, self.serverId)
 
                 clients = self.__mc.GetClients(self.serverId)
+
+                # Sends list of nicknames to clienthandler
+                self.server.currentClients = [
+                    client["nickname"].lower() for client in clients
+                ]
+
+                # Send list of clients to clienthandlers
                 self.SendMessageToHandlers("CLT",
                                            json.dumps(
                                                clients,
