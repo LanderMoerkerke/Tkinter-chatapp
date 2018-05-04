@@ -21,13 +21,17 @@ logging.basicConfig(
 
 
 class ChatWindow(Frame):
-    def __init__(self, port, clientsocket, master=None):
+    def __init__(self, port, clientsocket, writerobj, master=None):
         super().__init__(master)
 
         self.master = master
         self.__port = 7000
+        self.my_writer_obj = writerobj
 
         self.init_chat()
+
+        t = Thread(target=self.readStreamWriter)
+        t.start()
 
         # testen
         # self.makeConnnectionWithServer()
@@ -95,28 +99,6 @@ class ChatWindow(Frame):
         Grid.columnconfigure(self, 5, weight=1)
         logging.info("Clientwindow created")
 
-    def makeConnnectionWithServer(self):
-        try:
-            logging.info("Making connection with server...")
-
-            # get local machine name
-            host = socket.gethostname()
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-            # connection to hostname on the port.
-            self.s.connect((host, self.__port))
-            self.my_writer_obj = self.s.makefile(mode='rw')
-
-            logging.info("Open connection with server succesfully")
-
-            t = Thread(target=self.readStreamWriter)
-            t.start()
-            logging.info("Thread stream reader starter")
-        except Exception as ex:
-            logging.error("Foutmelding: %s" % str(ex))
-            messagebox.showinfo("Chatwindow", "Something has gone wrong...")
-            self.__del__()
-
     def __del__(self):
         self.close_connection()
 
@@ -130,9 +112,7 @@ class ChatWindow(Frame):
             self.my_writer_obj.flush()
 
             logging.info('Message sent "%s"' % message.text)
-
-            # self.lstChat.insert(END, "%s: %s" % (self.client.nickname,
-            #                                      message.text))
+            self.entChat.delete(0, END)
 
         except Exception as ex:
             logging.error("Foutmelding: %s" % ex)
@@ -157,11 +137,14 @@ class ChatWindow(Frame):
                     nickname = obj[1]
                     self.lstChat.insert(END, "%s: %s" % (nickname,
                                                          message["text"]))
-
-                #  self.lstChat.insert(END, "%s: %s" % (self.client.name,
-                #                                  message.text))
         except Exception as ex:
             logging.error(ex)
+
+    def printOnlineNicknames(self, lstNicknames):
+        self.lstClients.delete(0, END)
+
+        for nickname in lstNicknames:
+            self.lstClients.insert(END, nickname)
 
     def close_connection(self):
         try:

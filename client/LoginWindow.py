@@ -53,36 +53,42 @@ class LoginWindow(Frame):
 
         self.pack()
 
-    def _login_btn_clicked(self):
+    def GetFields(self):
+        logging.info("Getting input fields")
+
         name = self.entry_name.get()
         nickname = self.entry_nickname.get()
         email = self.entry_email.get()
 
         self.client = Client(name, nickname, email)
-        print("dit is de client")
-        print(self.client)
+
+        logging.info("Created client from input fields")
+
+    def _login_btn_clicked(self):
+        self.GetFields()
 
         # Checks if nickname is in use
+        logging.info("Sending client")
         self.my_writer_obj.write(
             json.dumps(self.client.__dict__, default=json_util.default) + "\n")
         self.my_writer_obj.flush()
 
-        msg = self.my_writer_obj.readline.rstrip('\n')
+        msg = self.my_writer_obj.readline().rstrip('\n')
         logging.info("Response nickname received: %s" % msg)
 
-        while msg.lower() != "success":
+        if msg.lower() == "clientadded":
+            self.create_chatwindow()
+        else:
             logging.info("Nickname in use")
             messagebox.showinfo(
                 "Nickname",
                 "Nickname is already in use. Choose a different nickname.")
-            msg = self.my_writer_obj.readline.rstrip('\n')
-
-        self.create_chatwindow()
+            # nickname is in use, wait for the user to press the button again
 
     def create_chatwindow(self):
         t = Toplevel(self)
         from client.ChatWindow import ChatWindow
-        self.child = ChatWindow(self.__port, self.s, t)
+        self.child = ChatWindow(self.__port, self.s, self.my_writer_obj, t)
         # t.wm_title("Chatwindow)
         # l = tk.Label(t, text="This is window #%s" % self.counter)
         # l.pack(side="top", fill="both", expand=True, padx=100, pady=100)

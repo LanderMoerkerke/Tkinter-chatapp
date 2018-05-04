@@ -66,6 +66,7 @@ class ServerWindow(Frame):
             self.__mc.SendMessage(self.serverId, nickname, message)
 
             # Message wordt doorgestuurd naar iedere clienthandler
+            logging.info("Sending messages to clienthandlers")
             self.SendMessageToHandlers(
                 json.dumps(obj, default=json_util.default))
 
@@ -90,9 +91,12 @@ class ServerWindow(Frame):
         client = self.__databaseQueue.get()
         while self.server.statusServer:
             logging.info("Got a queue-item, databasequeue: %s" % client)
-            self.__mc.AddClient(client, self.serverId)
-            self.__databaseQueue.task_done()
-            client = self.__databaseQueue.get()
+            try:
+                self.__mc.AddClient(client, self.serverId)
+                self.__databaseQueue.task_done()
+                client = self.__databaseQueue.get()
+            except Exception as ex:
+                raise ex
         print("queue stop")
 
     def initWindow(self):

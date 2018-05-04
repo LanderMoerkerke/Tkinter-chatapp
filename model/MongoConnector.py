@@ -92,7 +92,8 @@ class MongoConnector():
             except errors.WriteError as we:
                 logging.error("Data failed to retreive")
         else:
-            raise Exception
+            ex = Exception()
+            raise ex
 
     # Get data
     def GetClients(self, serverId):

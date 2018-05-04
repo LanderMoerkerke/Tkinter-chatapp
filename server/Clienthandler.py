@@ -20,7 +20,7 @@ class ClientHandler(threading.Thread):
         ClientHandler.amountClients += 1
 
     def run(self):
-        logging.info("Threat run server started")
+        logging.info("Thread run server started")
         logging.info("Amount of threads active: %s" % threading.active_count())
         self.io = self.socketClient.makefile(mode='rw')
 
@@ -32,14 +32,18 @@ class ClientHandler(threading.Thread):
                 try:
                     self.client = json.loads(
                         msg, object_hook=json_util.object_hook)
+
+                    # zal error geven wanneer client al in use is
                     self.databaseQueue.put(self.client)
+
                     self.initialized = True
-                except ValueError as ve:
-                    logging.error("Cannot convert message")
                 except Exception as ex:
-                    logging.error("Hierzo")
+                    self.io.write("%s\n" % "clientnotadded")
+                    self.io.flush()
                     logging.error(ex)
 
+            self.io.write("%s\n" % "clientadded")
+            self.io.flush()
             msg = self.io.readline().rstrip('\n')
             logging.info("Message received: %s" % msg)
 
@@ -55,14 +59,14 @@ class ClientHandler(threading.Thread):
                     logging.info("Message received: %s" % msg)
                 except Exception as ex:
                     logging.error(ex)
+                    raise ex
                 except ValueError as ve:
                     logging.error("Cannot parse message to json. %s" % ve)
-
-                msg = self.io.readline().rstrip('\n')
         except Exception as ex:
             self.socketClient.close()
             logging.info("Connection closed")
 
     def SendMessageToChatwindow(self, objString):
+        # logging.info("Sending message to chatwindow: %s" % objString)
         self.io.write("%s\n" % objString)
         self.io.flush()
