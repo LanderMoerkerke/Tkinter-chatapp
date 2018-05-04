@@ -62,6 +62,9 @@ class Server(threading.Thread):
                 self.clientHandlers.append(cls)
                 cls.start()
 
+                # send clients to clienthandlers
+                
+
                 logging.info(
                     "Amount of threads active: %s" % threading.active_count())
 

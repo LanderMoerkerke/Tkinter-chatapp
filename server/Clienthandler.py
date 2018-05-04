@@ -66,7 +66,7 @@ class ClientHandler(threading.Thread):
             self.socketClient.close()
             logging.info("Connection closed")
 
-    def SendMessageToChatwindow(self, objString):
+    def SendMessageToChatwindow(self, command, objString):
         # logging.info("Sending message to chatwindow: %s" % objString)
-        self.io.write("%s\n" % objString)
+        self.io.write("%s%s\n" % (command, objString))
         self.io.flush()

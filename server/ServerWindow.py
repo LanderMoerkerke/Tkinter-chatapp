@@ -67,8 +67,9 @@ class ServerWindow(Frame):
 
             # Message wordt doorgestuurd naar iedere clienthandler
             logging.info("Sending messages to clienthandlers")
-            self.SendMessageToHandlers(
-                json.dumps(obj, default=json_util.default))
+            self.SendMessageToHandlers("MSG",
+                                       json.dumps(
+                                           obj, default=json_util.default))
 
             # Task done
             self.__messageQueue.task_done()
@@ -82,19 +83,26 @@ class ServerWindow(Frame):
 
         print("queue stop")
 
-    def SendMessageToHandlers(self, objJson):
+    def SendMessageToHandlers(self, command, objJson):
         for clh in self.server.clientHandlers:
-            clh.SendMessageToChatwindow(objJson)
+            clh.SendMessageToChatwindow(command, objJson)
 
     def processDatabaseQueue(self):
         print("processsing")
-        client = self.__databaseQueue.get()
+        item = self.__databaseQueue.get()
         while self.server.statusServer:
-            logging.info("Got a queue-item, databasequeue: %s" % client)
+            logging.info("Got a queue-item, databasequeue: %s" % item)
             try:
-                self.__mc.AddClient(client, self.serverId)
+                self.__mc.AddClient(item, self.serverId)
+
+                clients = self.__mc.GetClients(self.serverId)
+                self.SendMessageToHandlers("CLT",
+                                           json.dumps(
+                                               clients,
+                                               default=json_util.default))
+
                 self.__databaseQueue.task_done()
-                client = self.__databaseQueue.get()
+                item = self.__databaseQueue.get()
             except Exception as ex:
                 raise ex
         print("queue stop")

@@ -129,22 +129,29 @@ class ChatWindow(Frame):
                 msg = self.my_writer_obj.readline().rstrip('\n')
                 logging.info("Read stream writer found a message: %s" % msg)
 
-                obj = json.loads(msg, object_hook=json_util.object_hook)
-
+                command = msg[:3]
+                print(msg[3:])
+                obj = json.loads(msg[3:], object_hook=json_util.object_hook)
+                print(obj)
                 # kunnen onderscheid maken tussen message object en lijst online clients
-                if True:
+                if command == "MSG":
+                    logging.info("Command MSG triggered")
                     message = obj[0]
                     nickname = obj[1]
                     self.lstChat.insert(END, "%s: %s" % (nickname,
                                                          message["text"]))
+                elif command == "CLT":
+                    logging.info("Command CLT triggered")
+                    self.printOnlineNicknames(obj)
         except Exception as ex:
             logging.error(ex)
 
     def printOnlineNicknames(self, lstNicknames):
         self.lstClients.delete(0, END)
 
-        for nickname in lstNicknames:
-            self.lstClients.insert(END, nickname)
+        for nn in lstNicknames:
+            print(nn)
+            self.lstClients.insert(END, nn["nickname"])
 
     def close_connection(self):
         try:
