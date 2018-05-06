@@ -39,7 +39,7 @@ class Server(threading.Thread):
         self.serversocket.listen(5)
         self.__serverStatus = True
         logging.info("Server started")
-        # self.print_message_gui("Server started")
+        self.print_message_gui("<Server> Server started")
 
     def stopServer(self):
         logging.info("Stopping server...")
@@ -58,11 +58,14 @@ class Server(threading.Thread):
                 # establish a connection!
                 clientsocket, addr = self.serversocket.accept()
                 logging.info("Got a connection from %s" % str(addr))
-                # self.print_message_gui("Got a connection from %s" % str(addr))
 
                 cls = Ch(clientsocket, self.__messageQueue,
                          self.__databaseQueue, self.currentClients)
                 self.clientHandlers.append(cls)
+
+                self.print_message_gui("<CLH%s> Got a connection from %s" %
+                                       (cls.id, str(addr)))
+
                 cls.start()
 
                 logging.info(
@@ -76,7 +79,7 @@ class Server(threading.Thread):
             logging.info("Server closed")
 
     def print_message_gui(self, message):
-        self.__messageQueue.put("<Server> %s" % message)
+        self.__messageQueue.put("%s" % message)
 
 
 def main():

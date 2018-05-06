@@ -35,22 +35,34 @@ import json
 # if isinstance(test, dict) and "status" in test.keys():
 #     print("ok")
 
-clients = [{
-    'name': 'jan',
-    'nickname': 'jan',
-    'email': 'jan',
-    'dateLogin': datetime.datetime(2018, 5, 4, 20, 34, 55, 833000),
-    'dateLogout': None,
-    'online': True,
-    'messages': []
-}, {
-    'name': 'karel',
-    'nickname': 'karel',
-    'email': 'karel',
-    'dateLogin': datetime.datetime(2018, 5, 4, 20, 35, 7, 502000),
-    'dateLogout': None,
-    'online': True,
-    'messages': []
-}]
-lstOnline = [client for client in clients if client["online"]]
-print(lstOnline)
+# clients = [{
+#     'name': 'jan',
+#     'nickname': 'jan',
+#     'email': 'jan',
+#     'dateLogin': datetime.datetime(2018, 5, 4, 20, 34, 55, 833000),
+#     'dateLogout': None,
+#     'online': True,
+#     'messages': []
+# }, {
+#     'name': 'karel',
+#     'nickname': 'karel',
+#     'email': 'karel',
+#     'dateLogin': datetime.datetime(2018, 5, 4, 20, 35, 7, 502000),
+#     'dateLogout': None,
+#     'online': True,
+#     'messages': []
+# }]
+# lstOnline = [client for client in clients if client["online"]]
+# print(lstOnline)
+# test = "bljqlfj lldkqsfj closed"
+# print(test[-6:])
+
+clients = []
+for i in range(3):
+    cl = Client("Jamie", "James", i)
+    clients.append(cl)
+    if i == 2:
+        del cl
+        # print(cl)
+
+print(clients)

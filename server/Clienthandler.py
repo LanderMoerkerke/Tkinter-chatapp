@@ -17,6 +17,7 @@ class ClientHandler(threading.Thread):
         self.id = ClientHandler.amountClients
         self.currentClients = pCurrentclients
 
+        self.client = None
         self.initialized = False
 
         ClientHandler.amountClients += 1
@@ -32,6 +33,9 @@ class ClientHandler(threading.Thread):
 
                 while msg[:3] == "CLT":
                     msg = self.io.readline().rstrip('\n')
+
+                if msg == "CLOSE":
+                    self.CloseConnection()
 
                 logging.info("Client received: %s" % msg)
 
@@ -79,3 +83,17 @@ class ClientHandler(threading.Thread):
         # logging.info("Sending message to chatwindow: %s" % objString)
         self.io.write("%s%s\n" % (command, objString))
         self.io.flush()
+
+    def CloseConnection(self):
+        logging.critical("CLH%s closed" % self.id)
+        if self.client is None:
+            self.messageQueue.put("CLH%s closed" % self.id)
+        else:
+            self.messageQueue.put("CLH%s closed" % self.id)
+            self.messageQueue.put(
+                "%s left the chatroom" % self.client["nickname"])
+
+        self.__del__()
+
+    # def __del__(self):
+    # logging.critical("Clienthandler closed")

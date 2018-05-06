@@ -143,6 +143,9 @@ class ChatWindow(Frame):
                 elif command == "CLT":
                     logging.info("Command CLT triggered")
                     self.printOnlineNicknames(obj)
+                elif command == "INF":
+                    self.lstChat.insert(END, obj)
+
         except Exception as ex:
             logging.error(ex)
 

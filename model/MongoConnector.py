@@ -124,9 +124,9 @@ class MongoConnector():
                 {
                     "clients.nickname": nickname,
                     "_id": serverId,
-                }, {"clients.$.messages": 1})
+                }, {"clients.$": 1})
             logging.debug("Retreiving client complete")
-            return data
+            return data["clients"][0]
         except errors.WriteError as we:
             logging.error("Data failed to retreive")
 
@@ -157,11 +157,11 @@ def main():
     # test = mc.GetClients(ObjectId("5ad2080b67db1d158cff4b3e"))
     # test = mc.GetMessagesByClientId(ObjectId("5ad314fd67db1d42b87a112c"))
     # test = mc.AddClient(cl, ObjectId("5ad2080b67db1d158cff4b3e"))
-    # test = mc.GetClientByNickname("lander", ObjectId("5ad2080b67db1d158cff4b3e"))
-    test = mc.CreateServer()
-    pprint(test.inserted_id)
-    for i in test:
-        print(Message(**i))
+    test = mc.GetClientByNickname("jan", ObjectId("5aef67c467db1d085029d339"))
+    # test = mc.CreateServer()
+    pprint(test)
+    # for i in test:
+    #     print(Message(**i))
 
     # print(Message("Test"))
 

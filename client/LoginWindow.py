@@ -124,6 +124,10 @@ class LoginWindow(Frame):
         except Exception as ex:
             logging.error("Foutmelding: Close connection with server failed")
 
+    def __del__(self):
+        logging.info("Close")
+        self.close_connection()
+
 
 def main():
     root = Tk()
