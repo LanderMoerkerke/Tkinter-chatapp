@@ -39,6 +39,7 @@ class Server(threading.Thread):
         self.serversocket.listen(5)
         self.__serverStatus = True
         logging.info("Server started")
+        # self.print_message_gui("Server started")
 
     def stopServer(self):
         logging.info("Stopping server...")
@@ -47,7 +48,7 @@ class Server(threading.Thread):
         logging.info("Stopped server")
 
     def run(self):
-        logging.info("Threat run server started")
+        logging.info("Thread run server started")
         logging.info("Amount of threads active: %s" % threading.active_count())
 
         try:
@@ -57,6 +58,7 @@ class Server(threading.Thread):
                 # establish a connection!
                 clientsocket, addr = self.serversocket.accept()
                 logging.info("Got a connection from %s" % str(addr))
+                # self.print_message_gui("Got a connection from %s" % str(addr))
 
                 cls = Ch(clientsocket, self.__messageQueue,
                          self.__databaseQueue, self.currentClients)

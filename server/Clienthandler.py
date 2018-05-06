@@ -29,6 +29,10 @@ class ClientHandler(threading.Thread):
         try:
             while not self.initialized:
                 msg = self.io.readline().rstrip('\n')
+
+                while msg[:3] == "CLT":
+                    msg = self.io.readline().rstrip('\n')
+
                 logging.info("Client received: %s" % msg)
 
                 try:

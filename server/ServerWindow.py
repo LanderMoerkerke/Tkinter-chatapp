@@ -101,7 +101,11 @@ class ServerWindow(Frame):
                     client["nickname"].lower() for client in clients
                 ]
 
-                # Send list of clients to clienthandlers
+                # Updating used nicknames in CLH's
+                for clh in self.server.clientHandlers:
+                    clh.currentClients = self.server.currentClients
+
+                # Send list of clients to clienthandlers (for list online)
                 self.SendMessageToHandlers("CLT",
                                            json.dumps(
                                                clients,

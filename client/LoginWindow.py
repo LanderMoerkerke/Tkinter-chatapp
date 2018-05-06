@@ -92,6 +92,10 @@ class LoginWindow(Frame):
         self.my_writer_obj.flush()
 
         msg = self.my_writer_obj.readline().rstrip('\n')
+
+        while msg[:3] == "CLT":
+            msg = self.my_writer_obj.readline().rstrip('\n')
+
         logging.info("Response nickname received: %s" % msg)
 
         if msg == "clientadded":
