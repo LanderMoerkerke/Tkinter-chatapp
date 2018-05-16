@@ -22,7 +22,7 @@ class Server(threading.Thread):
         self.__messageQueue = messageQueue
         self.__databaseQueue = databaseQueue
         self.__serverStatus = False
-        self.currentClients = []
+        self.currentNicknames = []
 
         self.clientHandlers = []
 
@@ -60,7 +60,7 @@ class Server(threading.Thread):
                 logging.info("Got a connection from %s" % str(addr))
 
                 cls = Ch(clientsocket, self.__messageQueue,
-                         self.__databaseQueue, self.currentClients)
+                         self.__databaseQueue, self.currentNicknames)
                 self.clientHandlers.append(cls)
 
                 self.print_message_gui("<CLH%s> Got a connection from %s" %

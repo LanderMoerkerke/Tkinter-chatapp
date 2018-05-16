@@ -25,7 +25,11 @@ class ChatWindow(Frame):
         super().__init__(master)
 
         self.master = master
+        self.master.protocol('WM_DELETE_WINDOW', self.close_connection)
+
         self.__port = 7000
+
+        self.clientsocket = clientsocket
         self.my_writer_obj = writerobj
 
         self.init_chat()
@@ -40,7 +44,6 @@ class ChatWindow(Frame):
         #     json.dumps(self.client.__dict__, default=json_util.default) + "\n")
         # self.my_writer_obj.flush()
 
-        # self.clientsocket = clientsocket
         # self.my_writer_obj = self.clientsocket.makefile(mode='rw')
 
     def init_chat(self):
@@ -164,8 +167,10 @@ class ChatWindow(Frame):
             logging.info("Close connection with server...")
             self.my_writer_obj.write("%s\n" % "CLOSE")
             self.my_writer_obj.flush()
-            self.s.close()
+            self.clientsocket.close()
+            self.quit()
         except Exception as ex:
+            raise ex
             logging.error("Foutmelding: Close connection with server failed")
 
 

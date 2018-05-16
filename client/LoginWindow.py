@@ -21,8 +21,9 @@ logging.basicConfig(
 class LoginWindow(Frame):
     def __init__(self, port, master=None):
         super().__init__(master)
-
+        self.pack(expand=True, fill="both")
         self.master = master
+        self.master.protocol('WM_DELETE_WINDOW', self.close_connection)
         self.__port = port
 
         self.init_window()
@@ -110,10 +111,14 @@ class LoginWindow(Frame):
     def create_chatwindow(self):
         t = Toplevel(self)
         from client.ChatWindow import ChatWindow
+
         self.child = ChatWindow(self.__port, self.s, self.my_writer_obj, t)
+        self.master.withdraw()
         # t.wm_title("Chatwindow)
         # l = tk.Label(t, text="This is window #%s" % self.counter)
         # l.pack(side="top", fill="both", expand=True, padx=100, pady=100)
+        # new = ChatWindow(self.__port, self.s, self.my_writer_obj, Tk())
+        # self.__del__()
 
     def close_connection(self):
         try:
@@ -121,12 +126,9 @@ class LoginWindow(Frame):
             self.my_writer_obj.write("%s\n" % "CLOSE")
             self.my_writer_obj.flush()
             self.s.close()
+            self.quit()
         except Exception as ex:
             logging.error("Foutmelding: Close connection with server failed")
-
-    def __del__(self):
-        logging.info("Close")
-        self.close_connection()
 
 
 def main():

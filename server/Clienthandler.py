@@ -8,14 +8,14 @@ class ClientHandler(threading.Thread):
     amountClients = 0
 
     def __init__(self, pSocketClient, pMessageQueue, pDatabaseQueue,
-                 pCurrentclients):
+                 pCurrentNicknames):
         threading.Thread.__init__(self)
 
         self.socketClient = pSocketClient
         self.messageQueue = pMessageQueue
         self.databaseQueue = pDatabaseQueue
         self.id = ClientHandler.amountClients
-        self.currentClients = pCurrentclients
+        self.currentNicknames = pCurrentNicknames
 
         self.client = None
         self.initialized = False
@@ -31,9 +31,6 @@ class ClientHandler(threading.Thread):
             while not self.initialized:
                 msg = self.io.readline().rstrip('\n')
 
-                while msg[:3] == "CLT":
-                    msg = self.io.readline().rstrip('\n')
-
                 if msg == "CLOSE":
                     self.CloseConnection()
 
@@ -44,11 +41,17 @@ class ClientHandler(threading.Thread):
                         msg, object_hook=json_util.object_hook)
 
                     # Checks if nickname is in use
-                    if self.client["nickname"].lower() in self.currentClients:
+                    if self.client[
+                            "nickname"].lower() in self.currentNicknames:
                         self.io.write("%s\n" % "cltfailed")
                         self.io.flush()
                     else:
-                        self.databaseQueue.put(self.client)
+                        # senderObject = self.client
+                        # senderObject.update({"addClient": True})
+                        # self.databaseQueue.put(senderObject)
+
+                        senderObject = [self.client, "addClient"]
+                        self.databaseQueue.put(senderObject)
                         self.initialized = True
                 except Exception as ex:
                     self.io.write("%s\n" % "clientnotadded")
@@ -60,7 +63,7 @@ class ClientHandler(threading.Thread):
             msg = self.io.readline().rstrip('\n')
             logging.info("Message received: %s" % msg)
 
-            while msg.lower() != "close":
+            while msg != "CLOSE":
                 try:
                     message = json.loads(
                         msg, object_hook=json_util.object_hook)
@@ -75,14 +78,23 @@ class ClientHandler(threading.Thread):
                     raise ex
                 except ValueError as ve:
                     logging.error("Cannot parse message to json. %s" % ve)
+
+            # Clienthandler krijgt CLOSE binnen
+            # Voegt offline toe
+            logging.info("End of run, making client offline")
+            senderObject = [self.client, "offlineClient"]
+            # senderObject.update({"offlineClient": True})
+            self.databaseQueue.put(senderObject)
+
         except Exception as ex:
             self.socketClient.close()
             logging.info("Connection closed")
 
     def SendMessageToChatwindow(self, command, objString):
         # logging.info("Sending message to chatwindow: %s" % objString)
-        self.io.write("%s%s\n" % (command, objString))
-        self.io.flush()
+        if self.initialized:
+            self.io.write("%s%s\n" % (command, objString))
+            self.io.flush()
 
     def CloseConnection(self):
         logging.critical("CLH%s closed" % self.id)

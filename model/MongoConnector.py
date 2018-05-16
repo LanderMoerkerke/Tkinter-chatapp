@@ -75,6 +75,26 @@ class MongoConnector():
         except errors.WriteError as we:
             logging.error("Document failed to send")
 
+    # Logout
+    def LogoutClient(self, nickname, serverId):
+        try:
+            logging.debug("Updating active to 0 of client (%s) in server %s" %
+                          (nickname, serverId))
+            data = self.__cursor[self.__CL_SERVER].update_one(
+                {
+                    "_id": serverId,
+                    "clients.nickname": nickname
+                }, {
+                    '$set': {
+                        "clients.$.online": False,
+                        "clients.$.dateLogout": datetime.datetime.now()
+                    }
+                })
+            logging.debug("Client added")
+            return data
+        except errors.WriteError as we:
+            logging.error("Data failed to retreive")
+
     # nog aanpassen krijgt dict binnen maar moet class zijn
     def AddClient(self, client, serverId):
         if self.CheckUniqueNickname(client["nickname"], serverId):
@@ -157,11 +177,12 @@ def main():
     # test = mc.GetClients(ObjectId("5ad2080b67db1d158cff4b3e"))
     # test = mc.GetMessagesByClientId(ObjectId("5ad314fd67db1d42b87a112c"))
     # test = mc.AddClient(cl, ObjectId("5ad2080b67db1d158cff4b3e"))
-    test = mc.GetClientByNickname("jan", ObjectId("5aef67c467db1d085029d339"))
+    # test = mc.GetClientByNickname("jan", ObjectId("5aef67c467db1d085029d339"))
+    test = mc.LogoutClient("jan", ObjectId("5aec4a4267db1d468827a4f0"))
     # test = mc.CreateServer()
     pprint(test)
-    # for i in test:
-    #     print(Message(**i))
+    for i in test:
+        print(Message(**i))
 
     # print(Message("Test"))
 

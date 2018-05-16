@@ -57,12 +57,17 @@ import json
 # test = "bljqlfj lldkqsfj closed"
 # print(test[-6:])
 
-clients = []
-for i in range(3):
-    cl = Client("Jamie", "James", i)
-    clients.append(cl)
-    if i == 2:
-        del cl
-        # print(cl)
+# clients = []
+# for i in range(3):
+#     cl = Client("Jamie", "James", i)
+#     clients.append(cl)
+#     if i == 2:
+#         del cl
+#         # print(cl)
 
-print(clients)
+# print(clients)
+
+mydict = {"test": False}
+test = mydict.update({"hoi": True})
+print(test)
+print(mydict)

@@ -51,11 +51,11 @@ class ServerWindow(Frame):
         logging.info("Databasequeue started")
 
     def print_messsages_from_messageQueue(self):
-        # obj: [dict(message), nickname]
         while True:
             obj = self.__messageQueue.get()
 
             if isinstance(obj, list):
+                # [dict(message), nickname]
                 logging.info("Retreived item from messagequeue: %s" % obj)
 
                 message = obj[0]
@@ -78,6 +78,7 @@ class ServerWindow(Frame):
                                                obj, default=json_util.default))
 
             elif isinstance(obj, str):
+                # Clent exited the chatroom
                 self.lstlog.insert(END, obj)
                 if obj[-8:] == "chatroom":
                     # self.server.clientHandlers.remove()
@@ -98,23 +99,39 @@ class ServerWindow(Frame):
             clh.SendMessageToChatwindow(command, objJson)
 
     def processDatabaseQueue(self):
-        item = self.__databaseQueue.get()
-        while self.server.statusServer:
+        while True:
+            item = self.__databaseQueue.get()
+
             logging.info("Got a queue-item, databasequeue: %s" % item)
+
+            dc = item[0]
+            cmd = item[1]
+
             try:
-                self.__mc.AddClient(item, self.serverId)
-                self.lstclients.insert(END, item["nickname"])
+                if cmd == "addClient":
+                    # krijgt client binnen om toe te voegen
+                    logging.info("Got addclient")
+                    self.__mc.AddClient(dc, self.serverId)
+                    self.lstlog.insert(END, "User: %s joined" % dc["nickname"])
+                    self.SendMessageToHandlers(
+                        "INF",
+                        json.dumps(
+                            "User: %s joined the chatroom" % dc["nickname"]))
+                elif cmd == "offlineClient":
+                    # krijgt client binnen om offline te zetten
+                    logging.info("Got offlineclient")
+                    self.__mc.LogoutClient(dc["nickname"], self.serverId)
 
                 clients = self.__mc.GetClients(self.serverId)
 
-                # Sends list of nicknames to clienthandler
-                self.server.currentClients = [
+                # Sends list of nicknames to clienthandler for used nicknames
+                self.server.currentNicknames = [
                     client["nickname"].lower() for client in clients
                 ]
 
                 # Updating used nicknames in CLH's
                 for clh in self.server.clientHandlers:
-                    clh.currentClients = self.server.currentClients
+                    clh.currentNicknames = self.server.currentNicknames
 
                 # Send list of clients to clienthandlers (for list online)
                 self.SendMessageToHandlers("CLT",
@@ -122,8 +139,17 @@ class ServerWindow(Frame):
                                                clients,
                                                default=json_util.default))
 
+                # Updates lstClients (for list online and offline)
+                self.lstclients.delete(0, END)
+                [
+                    self.lstclients.insert(END, client["nickname"])
+                    if client["online"] else self.lstoffline.insert(
+                        END, client["nickname"]) for client in clients
+                ]
+
+                # Task done
                 self.__databaseQueue.task_done()
-                item = self.__databaseQueue.get()
+
             except Exception as ex:
                 raise ex
         print("queue stop")
@@ -137,51 +163,54 @@ class ServerWindow(Frame):
 
         self.scrollbarnn = Scrollbar(self, orient=VERTICAL)
         self.scrollbarlog = Scrollbar(self, orient=VERTICAL)
+        self.scrollbaroff = Scrollbar(self, orient=VERTICAL)
 
-        Label(self, text="Online:").grid(row=0, column=0, sticky=W)
-        self.lstclients = Listbox(self, yscrollcommand=self.scrollbarnn.set)
+        # listview Online
+        Label(
+            self, text="Online:").grid(
+                row=0, column=0, sticky=W, padx=(5, 0))
+        self.lstclients = Listbox(
+            self, yscrollcommand=self.scrollbarnn.set, width=25, height=15)
+
+        # Binds function with click event
         self.lstclients.bind('<<ListboxSelect>>', self.selectNickname)
         self.scrollbarnn.config(command=self.lstclients.yview)
-
-        Label(
-            self, text="Log-berichten server:").grid(
-                row=0, column=2, sticky=W)
-        self.lstlog = Listbox(self, yscrollcommand=self.scrollbarlog.set)
-        self.scrollbarlog.config(command=self.lstlog.yview)
-
-        # Grid SETUP
-        # self.lstlog.grid(row=1, column=0, columnspan=2, sticky=N + S + E + W)
-        # self.scrollbarlog.grid(row=1, column=1, sticky=N + S)
-
-        # self.lstclients.grid(row=1, column=2, sticky=N + S + E + W)
-        # self.scrollbarnn.grid(row=1, column=3, sticky=N + S)
-
-        # self.btn_text = StringVar()
-        # self.btn_text.set("Start server")
-
-        # self.buttonServer = Button(
-        #     self, textvariable=self.btn_text, command=self.toggleServer)
-
-        # self.buttonServer.grid(
-        #     row=3,
-        #     column=0,
-        #     columnspan=4,
-        #     pady=(5, 5),
-        #     padx=(5, 5),
-        #     sticky=N + S + E + W)
-
-        # Grid.rowconfigure(self, 1, weight=1)
-        # Grid.columnconfigure(self, 0, weight=1)
-
-        # Left side
         self.lstclients.grid(
             row=1, column=0, pady=(0, 7), padx=(5, 0), sticky=N + S + W)
         self.scrollbarnn.grid(row=1, column=1, pady=(0, 7), sticky=N + S + W)
 
-        # Right side
-        self.lstlog.grid(row=1, column=2, sticky=N + S + E + W)
+        # listview Offline
+        Label(
+            self, text="Offline:").grid(
+                row=2, column=0, sticky=W + N, padx=(5, 0))
+        self.lstoffline = Listbox(
+            self, yscrollcommand=self.scrollbaroff.set, width=25, height=15)
+        self.scrollbaroff.config(command=self.lstoffline.yview)
+        self.lstoffline.grid(
+            row=3, column=0, pady=(0, 7), padx=(5, 0), sticky=N + S + W)
+        self.scrollbaroff.grid(row=3, column=1, pady=(0, 7), sticky=N + S + W)
+        Grid.rowconfigure(self, 2, weight=4)
+
+        # knop start/stop server
+        self.serverBtn = Button(self, text="Start/stop server", width=20)
+        self.serverBtn.grid(row=4, column=0, pady=(0, 7), columnspan=2)
+
+        # listview logberichten
+        Label(
+            self, text="Log-berichten server:").grid(
+                row=0, column=2, sticky=W)
+        self.lstlog = Listbox(
+            self, yscrollcommand=self.scrollbarlog.set, width=80, height=30)
+        self.scrollbarlog.config(command=self.lstlog.yview)
+        self.lstlog.grid(
+            row=1, column=2, pady=(0, 7), rowspan=4, sticky=N + S + E + W)
         self.scrollbarlog.grid(
-            row=1, column=3, padx=(0, 0), sticky=N + W + E + S)
+            row=1,
+            column=3,
+            padx=(0, 5),
+            pady=(0, 7),
+            rowspan=4,
+            sticky=N + W + E + S)
 
         Grid.rowconfigure(self, 2, weight=1)
         Grid.columnconfigure(self, 4, weight=1)
