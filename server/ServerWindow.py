@@ -27,17 +27,24 @@ class ServerWindow(Frame):
         self.master = master
         self.initWindow()
 
+        self.__port = port
+        self.server = None
+
         self.__mc = MongoConnector("localhost", "chat", "password", "chatapp")
         self.serverId = self.__mc.CreateServer().inserted_id
 
         self.initMessageQueue()
         self.initDatabaseQueue()
 
-        self.server = Server(socket.gethostname(), port, self.__messageQueue,
-                             self.__databaseQueue)
+        self.initServer()
 
-        self.toggleServer()
-        self.__port = port
+        # self.toggleServer()
+
+    def initServer(self):
+        self.server = Server(socket.gethostname(), self.__port,
+                             self.__messageQueue, self.__databaseQueue)
+        self.server.startServer()
+        self.server.start()
 
     def initMessageQueue(self):
         self.__messageQueue = Queue(10)
@@ -104,6 +111,7 @@ class ServerWindow(Frame):
 
             logging.info("Got a queue-item, databasequeue: %s" % item)
 
+            # [client dict, commando]
             dc = item[0]
             cmd = item[1]
 
@@ -112,11 +120,11 @@ class ServerWindow(Frame):
                     # krijgt client binnen om toe te voegen
                     logging.info("Got addclient")
                     self.__mc.AddClient(dc, self.serverId)
-                    self.lstlog.insert(END, "User: %s joined" % dc["nickname"])
+                    self.lstlog.insert(
+                        END, "%s joined the chatroom!" % dc["nickname"])
                     self.SendMessageToHandlers(
                         "INF",
-                        json.dumps(
-                            "User: %s joined the chatroom" % dc["nickname"]))
+                        json.dumps("%s joined the chatroom!" % dc["nickname"]))
                 elif cmd == "offlineClient":
                     # krijgt client binnen om offline te zetten
                     logging.info("Got offlineclient")
@@ -141,6 +149,7 @@ class ServerWindow(Frame):
 
                 # Updates lstClients (for list online and offline)
                 self.lstclients.delete(0, END)
+                self.lstoffline.delete(0, END)
                 [
                     self.lstclients.insert(END, client["nickname"])
                     if client["online"] else self.lstoffline.insert(
@@ -172,8 +181,6 @@ class ServerWindow(Frame):
         self.lstclients = Listbox(
             self, yscrollcommand=self.scrollbarnn.set, width=25, height=15)
 
-        # Binds function with click event
-        self.lstclients.bind('<<ListboxSelect>>', self.selectNickname)
         self.scrollbarnn.config(command=self.lstclients.yview)
         self.lstclients.grid(
             row=1, column=0, pady=(0, 7), padx=(5, 0), sticky=N + S + W)
@@ -191,8 +198,18 @@ class ServerWindow(Frame):
         self.scrollbaroff.grid(row=3, column=1, pady=(0, 7), sticky=N + S + W)
         Grid.rowconfigure(self, 2, weight=4)
 
+        # Binds function with click event to listboxes
+        self.lstclients.bind('<<ListboxSelect>>', self.selectNickname)
+        self.lstoffline.bind('<<ListboxSelect>>', self.selectNickname)
+
         # knop start/stop server
-        self.serverBtn = Button(self, text="Start/stop server", width=20)
+        self.btn_text = StringVar()
+        self.btn_text.set("Stop server")
+        self.serverBtn = Button(
+            self,
+            textvariable=self.btn_text,
+            width=20,
+            command=self.toggleServer)
         self.serverBtn.grid(row=4, column=0, pady=(0, 7), columnspan=2)
 
         # listview logberichten
@@ -218,22 +235,50 @@ class ServerWindow(Frame):
         logging.info("Serverwindow created")
 
     def selectNickname(self, e):
-        selected = self.lstclients.get(ACTIVE)
-        if selected:
-            client = self.__mc.GetClientByNickname(selected, self.serverId)
-            print(client)
-            messagebox.showinfo(client["nickname"], str(client["messages"]))
-        self.lstclients.selection_clear(0, END)
+        # checks if event is linked to which listbox
+        if e.widget == self.lstclients:
+            selected = self.lstclients.get(ACTIVE)
+            if selected:
+                client = self.__mc.GetClientByNickname(selected, self.serverId)
+
+                output = self.__CreateOutput(client, 0)
+
+                messagebox.showinfo(client["nickname"], "\n".join(output))
+            self.lstclients.selection_clear(0, END)
+        elif e.widget == self.lstoffline:
+            selected = self.lstoffline.get(ACTIVE)
+            if selected:
+                client = self.__mc.GetClientByNickname(selected, self.serverId)
+
+                output = self.__CreateOutput(client, 1)
+
+                messagebox.showinfo(client["nickname"], "\n".join(output))
+            self.lstoffline.selection_clear(0, END)
+
+    def __CreateOutput(self, client, online):
+        output = [
+            "Name: %s" % client["name"],
+            "Nickname: %s" % client["nickname"],
+            "Email: %s" % client["email"],
+            "Date login: %s" % client["dateLogin"].strftime("%c")
+        ]
+
+        if online:
+            output.append(
+                "Date logout: %s" % client["dateLogout"].strftime("%c"))
+            output.append("Total online time: %s" %
+                          (client["dateLogout"] - client["dateLogin"]))
+
+        output.append("Messages sent:")
+        output.extend([obj["text"] for obj in client["messages"]])
+        return output
 
     def toggleServer(self):
-        if self.server.statusServer:
+        if self.server is not None and self.server.statusServer:
+            # alert
+            self.SendMessageToHandlers("ALT", json.dumps("CHATROOM IS CLOSED"))
             self.server.stopServer()
+            self.btn_text.set("Start server")
         else:
-            self.server.startServer()
-            self.server.start()
-
-    def closeServer(self):
-        self.server.stopServer()
-
-    def statusServer(self):
-        return self.server.statusServer()
+            self.initServer()
+            self.btn_text.set("Stop server")

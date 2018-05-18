@@ -21,11 +21,12 @@ logging.basicConfig(
 
 
 class ChatWindow(Frame):
-    def __init__(self, port, clientsocket, writerobj, master=None):
+    def __init__(self, port, client, clientsocket, writerobj, master=None):
         super().__init__(master)
 
         self.master = master
         self.master.protocol('WM_DELETE_WINDOW', self.close_connection)
+        self.client = client
 
         self.__port = 7000
 
@@ -141,13 +142,21 @@ class ChatWindow(Frame):
                     logging.info("Command MSG triggered")
                     message = obj[0]
                     nickname = obj[1]
-                    self.lstChat.insert(END, "%s: %s" % (nickname,
-                                                         message["text"]))
+                    if nickname == self.client["nickname"]:
+                        self.lstChat.insert(END, "You: %s" % (message["text"]))
+                    else:
+                        self.lstChat.insert(END, "%s: %s" % (nickname,
+                                                             message["text"]))
                 elif command == "CLT":
                     logging.info("Command CLT triggered")
                     self.printOnlineNicknames(obj)
                 elif command == "INF":
                     self.lstChat.insert(END, obj)
+                    logging.info("Command ALT triggered")
+                elif command == "ALT":
+                    messagebox.showerror("Closed",
+                                         "The server closed the chatroom")
+                    self.close_connection()
 
         except Exception as ex:
             logging.error(ex)

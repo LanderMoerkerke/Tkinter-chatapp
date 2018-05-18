@@ -106,6 +106,3 @@ class ClientHandler(threading.Thread):
                 "%s left the chatroom" % self.client["nickname"])
 
         self.__del__()
-
-    # def __del__(self):
-    # logging.critical("Clienthandler closed")

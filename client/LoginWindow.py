@@ -69,10 +69,12 @@ class LoginWindow(Frame):
             logging.info("Open connection with server succesfully")
         except Exception as ex:
             logging.error("Foutmelding: %s" % str(ex))
-            messagebox.showinfo("Something has gone wrong...")
-            # self.__del__()
+            messagebox.showinfo("Something has gone wrong...",
+                                "There was no connection with a server.")
+            self.quit()
+            self.destroy()
 
-    def GetFields(self):
+    def __GetFields(self):
         logging.info("Getting input fields")
 
         name = self.entry_name.get()
@@ -84,7 +86,7 @@ class LoginWindow(Frame):
         logging.info("Created client from input fields")
 
     def _login_btn_clicked(self):
-        self.GetFields()
+        self.__GetFields()
 
         # Checks if nickname is in use
         logging.info("Sending client")
@@ -112,7 +114,8 @@ class LoginWindow(Frame):
         t = Toplevel(self)
         from client.ChatWindow import ChatWindow
 
-        self.child = ChatWindow(self.__port, self.s, self.my_writer_obj, t)
+        self.child = ChatWindow(self.__port, self.client.__dict__, self.s,
+                                self.my_writer_obj, t)
         self.master.withdraw()
         # t.wm_title("Chatwindow)
         # l = tk.Label(t, text="This is window #%s" % self.counter)

@@ -45,7 +45,8 @@ class Server(threading.Thread):
         logging.info("Stopping server...")
         self.__serverStatus = False
         self.serversocket.close()
-        logging.info("Stopped server")
+        self.print_message_gui("<Server> Server stopped")
+        logging.info("Stopped server successfully")
 
     def run(self):
         logging.info("Thread run server started")
@@ -71,12 +72,12 @@ class Server(threading.Thread):
                 logging.info(
                     "Amount of threads active: %s" % threading.active_count())
 
+            logging.info("Server runt en dan stop het ofzo")
         except Exception as ex:
-            logging.error("Server crashed")
-            logging.error(ex)
-            self.serversocket.close()
-            self.__serverStatus = False
-            logging.info("Server closed")
+            pass
+            # logging.error("Server crashed")
+            # logging.error(ex)
+            # raise ex
 
     def print_message_gui(self, message):
         self.__messageQueue.put("%s" % message)
