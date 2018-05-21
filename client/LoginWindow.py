@@ -36,9 +36,9 @@ class LoginWindow(Frame):
         self.label_nickname = Label(self, text="Nickname")
         self.label_email = Label(self, text="Email")
 
-        self.entry_name = Entry(self)
-        self.entry_nickname = Entry(self)
-        self.entry_email = Entry(self)
+        self.entry_name = Entry(self, width=40)
+        self.entry_nickname = Entry(self, width=40)
+        self.entry_email = Entry(self, width=40)
 
         self.label_name.grid(row=0, sticky=E)
         self.label_nickname.grid(row=1, sticky=E)
@@ -49,10 +49,11 @@ class LoginWindow(Frame):
         self.entry_email.grid(row=2, column=1)
 
         self.logbtn = Button(
-            self, text="Login", command=self._login_btn_clicked)
-        self.logbtn.grid(columnspan=2)
+            self, text="Login", command=self._login_btn_clicked, width=25)
+        self.logbtn.grid(
+            columnspan=2, pady=(5, 5), padx=(25, 25), sticky=N + S + E + W)
 
-        self.pack()
+        self.pack(fill=BOTH, expand=1)
 
     def makeConnnectionWithServer(self):
         try:

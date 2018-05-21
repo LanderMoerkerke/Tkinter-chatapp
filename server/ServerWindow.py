@@ -11,6 +11,7 @@ from tkinter.ttk import Combobox
 
 from server.Server import Server
 from model.MongoConnector import MongoConnector
+from pymongo import errors
 
 # logging.basicConfig(level=logging.INFO)
 logging.basicConfig(
@@ -30,8 +31,7 @@ class ServerWindow(Frame):
         self.__port = port
         self.server = None
 
-        self.__mc = MongoConnector("localhost", "chat", "password", "chatapp")
-        self.serverId = self.__mc.CreateServer().inserted_id
+        self.CreateDatabaseConnection()
 
         self.initMessageQueue()
         self.initDatabaseQueue()
@@ -39,6 +39,17 @@ class ServerWindow(Frame):
         self.initServer()
 
         # self.toggleServer()
+    def CreateDatabaseConnection(self):
+        try:
+            self.__mc = MongoConnector("localhost", "chat", "password",
+                                       "chatapp")
+            self.serverId = self.__mc.CreateServer().inserted_id
+        except errors.ServerSelectionTimeoutError:
+            messagebox.showinfo(
+                "Error",
+                "Couldn't establish a connection to the database, please try again."
+            )
+            self.destroy()
 
     def initServer(self):
         self.server = Server(socket.gethostname(), self.__port,
